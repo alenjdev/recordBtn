@@ -1,5 +1,4 @@
-import { CommandIssuer } from "./CommandIssuer";
-import { FC, useEffect, useState, useMemo } from "react";
+import { Component } from "react";
 import { App, Device, ModuleData } from "@formant/data-sdk";
 import { Button } from "@alenjdev/ui-sdk";
 
@@ -7,51 +6,80 @@ interface ICommandHandleProps {
   device: Device | undefined;
 }
 
-export const CommandHandle: FC<ICommandHandleProps> = ({ device }) => {
-  const [isRecording, setIsRecording] = useState<boolean>();
-  const [disable, setDisable] = useState(false);
+interface ICommandHandleState {
+  isRecording: boolean;
+  disable: boolean;
+}
+interface latestState {
+  keys: string[];
+  values: boolean[];
+}
 
-  useEffect(() => {
-    App.addModuleDataListener(receiveModuleData);
-  }, [device]);
+export class CommandHandle extends Component<
+  ICommandHandleProps,
+  ICommandHandleState
+> {
+  public constructor(props: any) {
+    super(props);
+    this.state = {
+      isRecording: false,
+      disable: false,
+    };
+  }
 
-  const receiveModuleData = async (newValue: ModuleData) => {
-    const latestState = getLatestJsonUrl(newValue);
+  public componentDidMount() {
+    App.addModuleDataListener(this.receiveModuleData);
+  }
+
+  receiveModuleData = async (newValue: ModuleData) => {
+    const { isRecording } = this.state;
+    const latestState = getLatestData(newValue);
     if (latestState === undefined) return;
-    let currentState = latestState.values[0];
-    setDisable(!disable);
-    if (isRecording !== currentState) {
-      setIsRecording(latestState.values[0]);
-      console.log(isRecording);
+    if (typeof latestState === "string") return;
+    if (latestState.values[0] === undefined || latestState.values.length === 0)
+      return;
+    if (isRecording !== latestState.values[0]) {
+      this.setState({
+        isRecording: latestState.values[0],
+        disable: false,
+      });
     }
   };
 
-  const issueCommand = async () => {
+  issueCommand = async () => {
+    const { device } = this.props;
+    const { isRecording } = this.state;
     if (!device) return;
     device.sendCommand("switch_polygon_record", isRecording ? "STOP" : "START");
-    setDisable(true);
+    this.setState({
+      disable: true,
+    });
     setTimeout(() => {
-      setDisable(false);
+      this.setState({
+        disable: false,
+      });
     }, 20000);
   };
+  render() {
+    const { disable, isRecording } = this.state;
+    return (
+      <div>
+        <Button
+          disabled={disable}
+          onClick={this.issueCommand}
+          type="primary"
+          size="large"
+        >
+          {isRecording ? "STOP Polygon record" : "START Polygon record"}
+        </Button>
+      </div>
+    );
+  }
+}
 
-  return (
-    <div>
-      <Button
-        disabled={disable}
-        onClick={issueCommand}
-        type="primary"
-        size="large"
-      >
-        {isRecording ? "STOP Polygon record" : "START Polygon record"}
-      </Button>
-    </div>
-  );
-};
-
-function getLatestJsonUrl(
+function getLatestData(
   moduleData: ModuleData
-): { keys: string[]; values: boolean[] } | string | undefined {
+): latestState | string | undefined {
   const streams = Object.values(moduleData.streams);
   if (streams.length === 0) {
     return "No streams.";

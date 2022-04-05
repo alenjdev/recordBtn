@@ -11,7 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@alenjdev/ui-sdk": "^0.0.7",
+    "@alenjdev/ui-sdk": "^0.0.8",
     "@formant/data-sdk": "0.0.64",
     "gh-pages": "^3.2.3",
     "react": "^17.0.2",
