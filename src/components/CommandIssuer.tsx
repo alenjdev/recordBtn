@@ -1,7 +1,7 @@
 import { FC } from "react";
-import { Device } from "@formant/data-sdk";
-import { Button } from "../common/Button";
-
+import { Device, Fleet } from "@formant/data-sdk";
+import { Button } from "@alenjdev/ui-sdk";
+import { useState } from "react";
 interface ICommandIssuerProps {
   device: Device;
   command: string;
@@ -15,14 +15,24 @@ export const CommandIssuer: FC<ICommandIssuerProps> = ({
   label,
   params,
 }) => {
+  const [disable, setDisable] = useState(false);
   const issueCommand = async () => {
     if (!device) return;
     device.sendCommand(command, params);
+    setDisable(true);
+    setTimeout(() => {
+      setDisable(false);
+    }, 5000);
   };
 
   return (
     <div>
-      <Button onClick={issueCommand} type="primary" size="large">
+      <Button
+        disabled={disable}
+        onClick={issueCommand}
+        type="primary"
+        size="large"
+      >
         {label}
       </Button>
     </div>
