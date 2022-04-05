@@ -236,7 +236,7 @@ body {
   position: relative;
   margin: 0;
   padding: 1rem;
-  min-height: 100vh;
+  min-height: calc(100vh - 2rem);
   min-width: 100%;
   background-color: #1c1e2d;
 }
